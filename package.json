@@ -1,0 +1,15 @@
+{
+	"name": "browser-tools",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "Minimal CDP tools for collaborative site exploration",
+	"author": "Mario Zechner",
+	"license": "MIT",
+	"dependencies": {
+		"puppeteer-core": "^23.11.1"
+	},
+	"devDependencies": {
+		"tsx": "^4.19.2",
+		"typescript": "^5.7.2"
+	}
+}
