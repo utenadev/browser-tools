@@ -1,0 +1,9 @@
+Testing bt CLI...
+✓ Test 1: bt without args passed
+✓ Test 2: invalid command passed
+✓ Test 3: content without url passed
+✓ Test 4: eval without code passed
+✓ Test 5: nav without url passed
+✓ Test 6: pick without message passed
+✓ Test 7: search without query passed
+Tests completed.
