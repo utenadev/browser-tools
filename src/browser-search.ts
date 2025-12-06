@@ -30,7 +30,7 @@ export async function search(query: string, numResults: number = 5, fetchContent
 	async function extractResults() {
 		return p.evaluate(() => {
 			const items = [];
-			const searchResults = document.querySelectorAll("div.MjjYud");
+			const searchResults = document.querySelectorAll("div[data-ved], div.MjjYud");
 
 			for (const result of searchResults) {
 				const titleEl = result.querySelector("h3");
