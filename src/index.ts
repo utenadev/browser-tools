@@ -60,6 +60,21 @@ const argv = yargs(hideBin(process.argv))
   }, async (argv) => {
     await nav(argv.url, argv.new);
   })
+  .command('navigate <url>', 'Navigate to a URL', (yargs) => {
+    return yargs
+      .positional('url', {
+        type: 'string',
+        description: 'URL to navigate to',
+      })
+      .option('new', {
+        type: 'boolean',
+        description: 'Open in a new tab',
+      })
+      .example('$0 navigate https://example.com', 'Navigate to example.com')
+      .example('$0 navigate https://example.com --new', 'Open example.com in new tab');
+  }, async (argv) => {
+    await nav(argv.url, argv.new);
+  })
   .command('eval <code>', 'Execute JavaScript in the active tab', (yargs) => {
     return yargs
       .positional('code', {

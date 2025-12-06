@@ -72,11 +72,13 @@ browser-tools start --headless   # ヘッドレスモードで実行
 ## ナビゲート
 
 ```bash
-browser-tools nav https://google.com
-browser-tools nav https://google.com --new
+bt nav https://google.com
+bt nav https://google.com --new
+bt navigate https://google.com
+bt navigate https://google.com --new
 ```
 
-URL にナビゲート。`--new` フラグを使用して現在のタブを再利用せずに新しいタブで開く。
+URL にナビゲート。`--new` フラグを使用して現在のタブを再利用せずに新しいタブで開く。`navigate` は `nav` のエイリアス。
 
 ## JavaScript の評価
 

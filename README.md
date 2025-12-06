@@ -57,11 +57,13 @@ Launch Chrome with remote debugging on `:9222`. Use `--profile` to preserve user
 ## Navigate
 
 ```bash
-browser-tools nav https://google.com
-browser-tools nav https://google.com --new
+bt nav https://google.com
+bt nav https://google.com --new
+bt navigate https://google.com
+bt navigate https://google.com --new
 ```
 
-Navigate to URLs. Use `--new` flag to open in a new tab instead of reusing current tab.
+Navigate to URLs. Use `--new` flag to open in a new tab instead of reusing current tab. `navigate` is an alias for `nav`.
 
 ## Evaluate JavaScript
 
