@@ -11,7 +11,9 @@ import { nav } from './browser-nav.js';
 import { pick } from './browser-pick.js';
 import { screenshot } from './browser-screenshot.js';
 import { search } from './browser-search.js';
+import { loadConfig } from './config.js';
 
+const config = loadConfig();
 const argv = yargs(hideBin(process.argv))
   .scriptName('browser-tools')
   .usage('Browser Tools - Chrome DevTools Protocol tools for agent-assisted web automation\n\nUsage: $0 <command> [options]')
@@ -20,19 +22,22 @@ const argv = yargs(hideBin(process.argv))
       .option('profile', {
         type: 'boolean',
         description: 'Copy user profile (cookies, logins)',
+        default: config.profile,
       })
       .option('headless', {
         type: 'boolean',
         description: 'Run in headless mode',
+        default: config.headless,
       })
       .option('chrome-path', {
         type: 'string',
         description: 'Specify Chrome executable path',
+        default: config.chromePath,
       })
       .option('channel', {
         type: 'string',
         description: 'Chrome release channel (stable, beta, dev, canary)',
-        default: 'stable',
+        default: config.channel || 'stable',
       })
       .example('$0 start', 'Start Chrome with default settings')
       .example('$0 start --profile --headless', 'Start Chrome with profile in headless mode')

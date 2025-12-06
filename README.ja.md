@@ -27,6 +27,21 @@ bun build --compile src/index.ts --outfile browser-tools.exe --target bun
 
 これにより、Windows (Win10+ x64) 用のスタンドアロン `browser-tools.exe` 実行可能ファイルが作成されます。
 
+## 設定ファイル
+
+プロジェクトルートに `.browser-tools.json` ファイルを配置することで、デフォルト設定を保存できます。
+
+```json
+{
+  "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "channel": "stable",
+  "headless": false,
+  "profile": false
+}
+```
+
+これらの設定はコマンドラインオプションで上書き可能です。
+
 ## これらのツールの呼び出し方法
 
 **エージェントにとって重要**: Bash ツール経由で呼び出す場合、`browser-tools` コマンドにサブコマンドを使用してください。
