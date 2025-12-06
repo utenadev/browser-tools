@@ -8,7 +8,6 @@
 	"bin": {
 		"browser-tools": "dist/index.js"
 	},
-
 	"dependencies": {
 		"@mozilla/readability": "^0.6.0",
 		"@puppeteer/browsers": "^2.11.0",
@@ -16,6 +15,7 @@
 		"jsdom": "^27.0.1",
 		"puppeteer-core": "^23.11.1",
 		"turndown": "^7.2.2",
-		"turndown-plugin-gfm": "^1.0.2"
+		"turndown-plugin-gfm": "^1.0.2",
+		"yargs": "^18.0.0"
 	}
 }

@@ -1,8 +1,5 @@
 import puppeteer from "puppeteer-core";
-import { Readability } from "@mozilla/readability";
-import { JSDOM } from "jsdom";
-import TurndownService from "turndown";
-import { gfm } from "turndown-plugin-gfm";
+import { htmlToMarkdown, extractContent } from "./utils/content-extractor.js";
 
 export async function content(url: string): Promise<void> {
 	// Global timeout - exit if script takes too long
@@ -43,45 +40,7 @@ export async function content(url: string): Promise<void> {
 
 	const finalUrl = p.url();
 
-	// Extract with Readability
-	const doc = new JSDOM(outerHTML, { url: finalUrl });
-	const reader = new Readability(doc.window.document);
-	const article = reader.parse();
-
-	// Convert to markdown
-	function htmlToMarkdown(html: string): string {
-		const turndown = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
-		turndown.use(gfm);
-		turndown.addRule("removeEmptyLinks", {
-			filter: (node) => node.nodeName === "A" && !node.textContent?.trim(),
-			replacement: () => "",
-		});
-		return turndown
-			.turndown(html)
-			.replace(/\[\\?\[\s*\\?\]\]\([^)]*\)/g, "")
-			.replace(/ +/g, " ")
-			.replace(/\s+,/g, ",")
-			.replace(/\s+\./g, ".")
-			.replace(/\n{3,}/g, "\n\n")
-			.trim();
-	}
-
-	let content: string;
-	if (article && article.content) {
-		content = htmlToMarkdown(article.content);
-	} else {
-		// Fallback
-		const fallbackDoc = new JSDOM(outerHTML, { url: finalUrl });
-		const fallbackBody = fallbackDoc.window.document;
-		fallbackBody.querySelectorAll("script, style, noscript, nav, header, footer, aside").forEach((el) => el.remove());
-		const main = fallbackBody.querySelector("main, article, [role='main'], .content, #content") || fallbackBody.body;
-		const fallbackHtml = main?.innerHTML || "";
-		if (fallbackHtml.trim().length > 100) {
-			content = htmlToMarkdown(fallbackHtml);
-		} else {
-			content = "(Could not extract content)";
-		}
-	}
+	const { title, content } = extractContent(outerHTML, finalUrl);
 
 	console.log(`URL: ${finalUrl}`);
 	if (article?.title) console.log(`Title: ${article.title}`);
