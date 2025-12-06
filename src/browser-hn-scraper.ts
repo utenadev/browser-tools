@@ -83,8 +83,14 @@ async function scrapeHackerNews(limit = 30) {
   }
 }
 
+import { handleError } from './utils/error-handler.js';
+
 export async function hnScraper(limit: number = 30): Promise<void> {
-  const submissions = await scrapeHackerNews(limit);
-  console.log(JSON.stringify(submissions, null, 2));
-  console.error(`\n✓ Scraped ${submissions.length} submissions`);
+	try {
+		const submissions = await scrapeHackerNews(limit);
+		console.log(JSON.stringify(submissions, null, 2));
+		console.error(`\n✓ Scraped ${submissions.length} submissions`);
+	} catch (error) {
+		handleError(error, 'Scraping Hacker News');
+	}
 }

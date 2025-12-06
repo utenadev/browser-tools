@@ -1,6 +1,8 @@
 import puppeteer from "puppeteer-core";
+import { handleError } from './utils/error-handler.js';
 
 export async function nav(url: string, newTab: boolean = false): Promise<void> {
+	try {
 	const b = await Promise.race([
 		puppeteer.connect({
 			browserURL: "http://localhost:9222",
@@ -24,4 +26,7 @@ export async function nav(url: string, newTab: boolean = false): Promise<void> {
 	}
 
 	await b.disconnect();
+	} catch (error) {
+		handleError(error, 'Navigating');
+	}
 }

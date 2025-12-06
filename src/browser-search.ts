@@ -1,7 +1,9 @@
 import puppeteer from "puppeteer-core";
 import { htmlToMarkdown, extractContent } from "./utils/content-extractor.js";
+import { handleError } from './utils/error-handler.js';
 
 export async function search(query: string, numResults: number = 5, fetchContent: boolean = false): Promise<void> {
+	try {
 	// Global timeout - exit if script takes too long
 	setTimeout(() => {
 		console.error("✗ Timeout after 60s");
@@ -126,4 +128,7 @@ export async function search(query: string, numResults: number = 5, fetchContent
 	}
 
 	process.exit(0);
+	} catch (error) {
+		handleError(error, 'Searching Google');
+	}
 }

@@ -1,6 +1,8 @@
 import puppeteer from "puppeteer-core";
+import { handleError } from './utils/error-handler.js';
 
 export async function pick(message: string): Promise<void> {
+	try {
 	const b = await Promise.race([
 		puppeteer.connect({
 			browserURL: "http://localhost:9222",
@@ -151,4 +153,7 @@ export async function pick(message: string): Promise<void> {
 	}
 
 	await b.disconnect();
+	} catch (error) {
+		handleError(error, 'Picking elements');
+	}
 }

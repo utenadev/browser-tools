@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import puppeteer from "puppeteer-core";
 import { install, ChromeReleaseChannel } from "@puppeteer/browsers";
 import { $ } from "bun";
+import { handleError } from './utils/error-handler.js';
 
 export async function checkConnection(): Promise<boolean> {
 	try {
@@ -20,6 +21,7 @@ export async function checkConnection(): Promise<boolean> {
 }
 
 export async function start(useProfile: boolean, chromePath?: string, channel: string = 'stable', headless: boolean = false): Promise<void> {
+	try {
 	// Kill existing Chrome
 	if (process.platform === 'win32') {
 		await $`taskkill /f /im chrome.exe`.nothrow();
@@ -89,4 +91,7 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 	}
 
 	console.log(`✓ Chrome started on :9222${useProfile ? " with your profile" : ""}`);
+	} catch (error) {
+		handleError(error, 'Starting Chrome');
+	}
 }

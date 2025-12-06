@@ -1,6 +1,8 @@
 import puppeteer from "puppeteer-core";
+import { handleError } from './utils/error-handler.js';
 
 export async function cookies(): Promise<void> {
+	try {
 	const b = await Promise.race([
 		puppeteer.connect({
 			browserURL: "http://localhost:9222",
@@ -32,4 +34,7 @@ export async function cookies(): Promise<void> {
 	}
 
 	await b.disconnect();
+	} catch (error) {
+		handleError(error, 'Getting cookies');
+	}
 }

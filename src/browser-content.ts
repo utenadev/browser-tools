@@ -1,7 +1,9 @@
 import puppeteer from "puppeteer-core";
 import { htmlToMarkdown, extractContent } from "./utils/content-extractor.js";
+import { handleError } from './utils/error-handler.js';
 
 export async function content(url: string): Promise<void> {
+	try {
 	// Global timeout - exit if script takes too long
 	const TIMEOUT = 30000;
 	const timeoutId = setTimeout(() => {
@@ -15,16 +17,11 @@ export async function content(url: string): Promise<void> {
 			defaultViewport: null,
 		}),
 		new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
-	]).catch((e) => {
-		console.error("✗ Could not connect to browser:", e.message);
-		console.error("  Run: bt start");
-		process.exit(1);
-	});
+	]);
 
 	const p = (await b.pages()).at(-1);
 	if (!p) {
-		console.error("✗ No active tab found");
-		process.exit(1);
+		throw new Error("No active tab found");
 	}
 
 	await Promise.race([
@@ -45,4 +42,7 @@ export async function content(url: string): Promise<void> {
 	console.log(content);
 
 	process.exit(0);
+	} catch (error) {
+		handleError(error, 'Extracting content');
+	}
 }
