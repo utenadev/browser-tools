@@ -160,5 +160,6 @@ const argv = yargs(hideBin(process.argv))
       }
     }
   })
+  .strict()
   .help()
   .argv;
