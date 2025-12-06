@@ -11,6 +11,14 @@ bun build src/index.ts --outdir dist --target bun
 
 その後、`browser-tools` コマンドを使用してください。
 
+## ヘルプ
+
+```bash
+browser-tools --help          # すべてのコマンドを表示
+browser-tools start --help    # start コマンドのオプションを表示
+browser-tools <command> --help # 特定のコマンドのヘルプを表示
+```
+
 ## .exe のビルド (Windows)
 
 ```bash

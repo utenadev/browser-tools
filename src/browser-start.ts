@@ -3,6 +3,22 @@ import puppeteer from "puppeteer-core";
 import { install, ChromeReleaseChannel } from "@puppeteer/browsers";
 import { $ } from "bun";
 
+export async function checkConnection(): Promise<boolean> {
+	try {
+		const browser = await Promise.race([
+			puppeteer.connect({
+				browserURL: "http://localhost:9222",
+				defaultViewport: null,
+			}),
+			new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 1000)),
+		]);
+		await browser.disconnect();
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 export async function start(useProfile: boolean, chromePath?: string, channel: string = 'stable', headless: boolean = false): Promise<void> {
 	// Kill existing Chrome
 	if (process.platform === 'win32') {

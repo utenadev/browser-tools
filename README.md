@@ -11,6 +11,14 @@ bun build src/index.ts --outdir dist --target bun
 
 Then use `browser-tools` command.
 
+## Help
+
+```bash
+browser-tools --help          # Show all commands
+browser-tools start --help    # Show start command options
+browser-tools <command> --help # Show specific command help
+```
+
 ## Building .exe (Windows)
 
 ```bash
