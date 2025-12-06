@@ -32,18 +32,15 @@ export async function content(url: string): Promise<void> {
 		new Promise((r) => setTimeout(r, 10000)),
 	]).catch(() => {});
 
-	// Get HTML via CDP (works even with TrustedScriptURL restrictions)
-	const client = await p.createCDPSession();
-	const { root } = await client.send("DOM.getDocument", { depth: -1, pierce: true });
-	const { outerHTML } = await client.send("DOM.getOuterHTML", { nodeId: root.nodeId });
-	await client.detach();
+	// Get HTML via page evaluation
+	const outerHTML = await p.evaluate(() => document.documentElement.outerHTML);
 
 	const finalUrl = p.url();
 
 	const { title, content } = extractContent(outerHTML, finalUrl);
 
 	console.log(`URL: ${finalUrl}`);
-	if (article?.title) console.log(`Title: ${article.title}`);
+	if (title) console.log(`Title: ${title}`);
 	console.log("");
 	console.log(content);
 
