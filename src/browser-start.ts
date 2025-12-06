@@ -59,8 +59,12 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 		try {
 			chromePathToUse = await install({ browser: 'chrome', channel: channelEnum });
 		} catch (error) {
-			console.warn(`⚠️ Failed to download Chrome ${channel}, falling back to stable: ${error.message}`);
-			chromePathToUse = await install({ browser: 'chrome', channel: ChromeReleaseChannel.STABLE });
+			console.warn(`Chrome ${channel} channel may not be available. Falling back to stable.`);
+			try {
+				chromePathToUse = await install({ browser: 'chrome', channel: ChromeReleaseChannel.STABLE });
+			} catch (fallbackError) {
+				throw new Error(`Failed to download Chrome: ${fallbackError.message}`);
+			}
 		}
 	}
 
