@@ -6,11 +6,12 @@
 	"author": "Mario Zechner",
 	"license": "MIT",
 	"bin": {
-		"bt": "dist/index.js"
+		"browser-tools": "dist/index.js"
 	},
 
 	"dependencies": {
 		"@mozilla/readability": "^0.6.0",
+		"@puppeteer/browsers": "^2.11.0",
 		"cheerio": "^1.1.2",
 		"jsdom": "^27.0.1",
 		"puppeteer-core": "^23.11.1",

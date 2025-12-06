@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { start } from './browser-start.js';
 import { content } from './browser-content.js';
@@ -13,8 +13,14 @@ import { search } from './browser-search.js';
 const cmd = process.argv[2];
 
 if (cmd === 'start') {
-  const useProfile = process.argv[3] === '--profile';
-  await start(useProfile);
+  const args = process.argv.slice(3);
+  const useProfile = args.includes('--profile');
+  const headless = args.includes('--headless');
+  const chromePathIndex = args.indexOf('--chrome-path');
+  const chromePath = chromePathIndex !== -1 && args[chromePathIndex + 1] ? args[chromePathIndex + 1] : undefined;
+  const channelIndex = args.indexOf('--channel');
+  const channel = channelIndex !== -1 && args[channelIndex + 1] ? args[channelIndex + 1] : 'stable';
+  await start(useProfile, chromePath, channel, headless);
 } else if (cmd === 'content') {
   const url = process.argv[3];
   if (!url) {

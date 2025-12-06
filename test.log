@@ -1,4 +1,4 @@
-Testing bt CLI...
+Running unit tests for bt CLI...
 ✓ Test 1: bt without args passed
 ✓ Test 2: invalid command passed
 ✓ Test 3: content without url passed
@@ -6,4 +6,11 @@ Testing bt CLI...
 ✓ Test 5: nav without url passed
 ✓ Test 6: pick without message passed
 ✓ Test 7: search without query passed
-Tests completed.
+✗ Test 8: start Chrome failed: Timeout after 10000ms
+✓ Test 9: navigate to yahoo.co.jp passed
+✓ Test 10: evaluate document.title passed
+✓ Test 11: extract content from yahoo.co.jp passed
+✓ Test 12: search for puppeteer passed
+✓ Test 8: start Chrome passed
+✗ Test 13: kill Chrome (dummy start to trigger kill) failed: Timeout after 5000ms
+All tests completed.
