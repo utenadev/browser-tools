@@ -56,7 +56,12 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 		chromePathToUse = chromePath;
 	} else {
 		const channelEnum = channel === 'beta' ? ChromeReleaseChannel.BETA : channel === 'dev' ? ChromeReleaseChannel.DEV : channel === 'canary' ? ChromeReleaseChannel.CANARY : ChromeReleaseChannel.STABLE;
-		chromePathToUse = await install({ browser: 'chrome', channel: channelEnum });
+		try {
+			chromePathToUse = await install({ browser: 'chrome', channel: channelEnum });
+		} catch (error) {
+			console.warn(`⚠️ Failed to download Chrome ${channel}, falling back to stable: ${error.message}`);
+			chromePathToUse = await install({ browser: 'chrome', channel: ChromeReleaseChannel.STABLE });
+		}
 	}
 
 	// Start Chrome in background (detached so Node can exit)
