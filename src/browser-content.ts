@@ -1,6 +1,6 @@
-import puppeteer from "puppeteer-core";
 import { htmlToMarkdown, extractContent } from "./utils/content-extractor.js";
 import { handleError } from './utils/error-handler.js';
+import { connectToBrowser, getActivePage } from './utils/browser-utils.js';
 
 export async function content(url: string): Promise<void> {
 	try {
@@ -11,18 +11,8 @@ export async function content(url: string): Promise<void> {
 		process.exit(1);
 	}, TIMEOUT).unref();
 
-	const b = await Promise.race([
-		puppeteer.connect({
-			browserURL: "http://localhost:9222",
-			defaultViewport: null,
-		}),
-		new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
-	]);
-
-	const p = (await b.pages()).at(-1);
-	if (!p) {
-		throw new Error("No active tab found");
-	}
+	const b = await connectToBrowser();
+	const p = await getActivePage(b);
 
 	await Promise.race([
 		p.goto(url, { waitUntil: "networkidle2" }),

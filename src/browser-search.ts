@@ -1,6 +1,6 @@
-import puppeteer from "puppeteer-core";
 import { htmlToMarkdown, extractContent } from "./utils/content-extractor.js";
 import { handleError } from './utils/error-handler.js';
+import { connectToBrowser, getActivePage } from './utils/browser-utils.js';
 
 export async function search(query: string, numResults: number = 5, fetchContent: boolean = false): Promise<void> {
 	try {
@@ -10,23 +10,8 @@ export async function search(query: string, numResults: number = 5, fetchContent
 		process.exit(1);
 	}, 60000).unref();
 
-	const b = await Promise.race([
-		puppeteer.connect({
-			browserURL: "http://localhost:9222",
-			defaultViewport: null,
-		}),
-		new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
-	]).catch((e) => {
-		console.error("✗ Could not connect to browser:", e.message);
-		console.error("  Run: bt start");
-		process.exit(1);
-	});
-
-	const p = (await b.pages()).at(-1);
-	if (!p) {
-		console.error("✗ No active tab found");
-		process.exit(1);
-	}
+	const b = await connectToBrowser();
+	const p = await getActivePage(b);
 
 	// Extract results from current page
 	async function extractResults() {
@@ -127,6 +112,7 @@ export async function search(query: string, numResults: number = 5, fetchContent
 		console.log("");
 	}
 
+	await b.disconnect();
 	process.exit(0);
 	} catch (error) {
 		handleError(error, 'Searching Google');

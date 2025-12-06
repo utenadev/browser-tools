@@ -1,17 +1,26 @@
 export class BrowserToolsError extends Error {
-  constructor(message: string, public code?: string) {
+  constructor(message: string, public hint?: string) {
     super(message);
     this.name = 'BrowserToolsError';
   }
 }
 
 export function handleError(error: unknown, context: string): never {
+  let message: string;
+  let hint: string | undefined;
+
   if (error instanceof BrowserToolsError) {
-    console.error(`✗ ${context}: ${error.message}`);
+    message = error.message;
+    hint = error.hint;
   } else if (error instanceof Error) {
-    console.error(`✗ ${context}: ${error.message}`);
+    message = error.message;
   } else {
-    console.error(`✗ ${context}: Unknown error`);
+    message = 'Unknown error';
+  }
+
+  console.error(`✗ ${context}: ${message}`);
+  if (hint) {
+    console.error(`  ${hint}`);
   }
   process.exit(1);
 }

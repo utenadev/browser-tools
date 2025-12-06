@@ -3,16 +3,11 @@ import puppeteer from "puppeteer-core";
 import { install, ChromeReleaseChannel } from "@puppeteer/browsers";
 import { $ } from "bun";
 import { handleError } from './utils/error-handler.js';
+import { connectToBrowser } from './utils/browser-utils.js';
 
 export async function checkConnection(): Promise<boolean> {
 	try {
-		const browser = await Promise.race([
-			puppeteer.connect({
-				browserURL: "http://localhost:9222",
-				defaultViewport: null,
-			}),
-			new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 1000)),
-		]);
+		const browser = await connectToBrowser();
 		await browser.disconnect();
 		return true;
 	} catch {
@@ -90,10 +85,7 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 	let connected = false;
 	for (let i = 0; i < 30; i++) {
 		try {
-			const browser = await puppeteer.connect({
-				browserURL: "http://localhost:9222",
-				defaultViewport: null,
-			});
+			const browser = await connectToBrowser();
 			await browser.disconnect();
 			connected = true;
 			break;

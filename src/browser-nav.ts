@@ -1,26 +1,16 @@
-import puppeteer from "puppeteer-core";
 import { handleError } from './utils/error-handler.js';
+import { connectToBrowser, getActivePage } from './utils/browser-utils.js';
 
 export async function nav(url: string, newTab: boolean = false): Promise<void> {
 	try {
-	const b = await Promise.race([
-		puppeteer.connect({
-			browserURL: "http://localhost:9222",
-			defaultViewport: null,
-		}),
-		new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
-	]).catch((e) => {
-		console.error("✗ Could not connect to browser:", e.message);
-		console.error("  Run: bt start");
-		process.exit(1);
-	});
+	const b = await connectToBrowser();
 
 	if (newTab) {
 		const p = await b.newPage();
 		await p.goto(url, { waitUntil: "domcontentloaded" });
 		console.log("✓ Opened:", url);
 	} else {
-		const p = (await b.pages()).at(-1);
+		const p = await getActivePage(b);
 		await p.goto(url, { waitUntil: "domcontentloaded" });
 		console.log("✓ Navigated to:", url);
 	}
