@@ -55,11 +55,35 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 	if (chromePath) {
 		chromePathToUse = chromePath;
 	} else {
-		const channelEnum = channel === 'beta' ? ChromeReleaseChannel.BETA : channel === 'dev' ? ChromeReleaseChannel.DEV : channel === 'canary' ? ChromeReleaseChannel.CANARY : ChromeReleaseChannel.STABLE;
-		try {
-			chromePathToUse = await install({ browser: 'chrome', channel: channelEnum });
-		} catch (error) {
-			throw new Error(`Chrome ${channel} channel is not available.`);
+		// Try local installation first
+		const localPath = process.platform === 'win32'
+			? channel === 'beta'
+				? 'C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe'
+				: channel === 'dev'
+				? 'C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe'
+				: channel === 'canary'
+				? 'C:\\Program Files\\Google\\Chrome SxS\\Application\\chrome.exe'
+				: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+			: channel === 'beta'
+			? '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta'
+			: channel === 'dev'
+			? '/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev'
+			: channel === 'canary'
+			? '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
+			: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+
+		// Check if local path exists
+		const fs = await import('fs');
+		if (fs.existsSync(localPath)) {
+			chromePathToUse = localPath;
+		} else {
+			// Download from puppeteer/browsers
+			const channelEnum = channel === 'beta' ? ChromeReleaseChannel.BETA : channel === 'dev' ? ChromeReleaseChannel.DEV : channel === 'canary' ? ChromeReleaseChannel.CANARY : ChromeReleaseChannel.STABLE;
+			try {
+				chromePathToUse = await install({ browser: 'chrome', channel: channelEnum });
+			} catch (error) {
+				throw new Error(`Chrome ${channel} channel is not available.`);
+			}
 		}
 	}
 
