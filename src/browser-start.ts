@@ -55,7 +55,7 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 	if (chromePath) {
 		chromePathToUse = chromePath;
 	} else {
-		// Try local installation first
+		// Use local installation
 		const localPath = process.platform === 'win32'
 			? channel === 'beta'
 				? 'C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe'
@@ -72,19 +72,8 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 			? '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary'
 			: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
-		// Check if local path exists
-		const fs = await import('fs');
-		if (fs.existsSync(localPath)) {
-			chromePathToUse = localPath;
-		} else {
-			// Download from puppeteer/browsers
-			const channelEnum = channel === 'beta' ? ChromeReleaseChannel.BETA : channel === 'dev' ? ChromeReleaseChannel.DEV : channel === 'canary' ? ChromeReleaseChannel.CANARY : ChromeReleaseChannel.STABLE;
-			try {
-				chromePathToUse = await install({ browser: 'chrome', channel: channelEnum });
-			} catch (error) {
-				throw new Error(`Chrome ${channel} channel is not available.`);
-			}
-		}
+		console.log(`Using Chrome at: ${localPath}`);
+		chromePathToUse = localPath;
 	}
 
 	// Start Chrome in background (detached so Node can exit)
