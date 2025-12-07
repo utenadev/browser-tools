@@ -1,9 +1,11 @@
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import path from 'node:path';
 import { Browser, launch, connect } from 'puppeteer-core';
 
 import { savePid, loadPid, clearPid } from './config.js';
 import { handleError } from './utils/error-handler.js';
+import { getChromePath } from './utils/browser-utils.js';
 import { Yargs } from 'yargs';
 import { loadConfig } from './config.js';
 
@@ -48,8 +50,8 @@ export const startBuilder = (yargs: Yargs) => {
 export async function start(args: StartArgs): Promise<Browser> {
   const chromePath = args.chromePath || getChromePath(args.channel);
   const port = 9222; // Or a random available port
-  const userDataDir = '.browser-tools-profile';
-  
+  const userDataDir = path.resolve(process.cwd(), '.browser-tools-profile');
+
   const launchArgs = [
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${userDataDir}`,
@@ -59,21 +61,44 @@ export async function start(args: StartArgs): Promise<Browser> {
   }
 
   const isWindows = process.platform === 'win32';
-  const command = isWindows 
-    ? `start "chrome" "${chromePath}" ${launchArgs.join(' ')}` 
+  const command = isWindows
+    ? `start "chrome" "${chromePath}" ${launchArgs.join(' ')}`
     : `"${chromePath}" ${launchArgs.join(' ')} &`;
+
+  console.log(`DEBUG: chromePath = ${chromePath}`);
+  console.log(`DEBUG: command = ${command}`);
 
   const { stdout, stderr } = await execAsync(command);
   if (stderr) {
     console.error(`✗ Error launching Chrome: ${stderr}`);
   }
 
-  // Wait a moment for the browser to initialize
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
+  // Poll for the browser to initialize
+  const maxRetries = 20; // 10 seconds total
+  let browser: Browser | null = null;
+
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const browserURL = `http://127.0.0.1:${port}`;
+      browser = await connect({ browserURL, defaultViewport: null });
+      if (browser) break;
+    } catch (e) {
+      if (i === maxRetries - 1) {
+        console.error(`✗ Failed to connect after ${maxRetries} attempts.`);
+        throw e;
+      }
+    }
+  }
+
+  if (!browser) {
+    throw new Error('Failed to connect to browser after retries');
+  }
+
   try {
     const browserURL = `http://127.0.0.1:${port}`;
-    const browser = await connect({ browserURL, defaultViewport: null });
+    // already connected above, but we need the object if we didn't assign it (we did)
+
     const pid = browser.process()?.pid;
 
     if (pid) {
@@ -81,8 +106,13 @@ export async function start(args: StartArgs): Promise<Browser> {
       console.log(`✓ Chrome started with PID: ${pid} on port ${port}.`);
     } else {
       // Fallback for when browser.process() is not available
-      const pidInfo = await loadPid();
-      console.log(`✓ Chrome started on port ${port}. PID not directly available, managed externally.`);
+      try {
+        const pidInfo = await loadPid();
+        console.log(`✓ Chrome started on port ${port}. PID not directly available, managed externally.`);
+      } catch (e) {
+        // loadPid might fail if file doesn't exist, which is fine
+        console.log(`✓ Chrome started on port ${port}.`);
+      }
     }
 
     return browser;
@@ -108,7 +138,7 @@ export async function close(browserOrPid?: Browser | number): Promise<void> {
     clearPid();
     return;
   }
-  
+
   try {
     const pidInfo = await loadPid();
     const pidToKill = typeof browserOrPid === 'number' ? browserOrPid : pidInfo.pid;
@@ -130,7 +160,7 @@ export async function checkConnection(): Promise<boolean> {
   try {
     const pidInfo = await loadPid();
     if (!pidInfo.browserURL) return false;
-    
+
     const browser = await connect({ browserURL: pidInfo.browserURL });
     await browser.disconnect();
     return true;

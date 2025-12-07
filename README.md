@@ -27,6 +27,21 @@ bun build --compile src/index.ts --outfile browser-tools.exe --target bun
 
 This creates a standalone `browser-tools.exe` executable for Windows (Win10+ x64).
 
+## 設定ファイル
+
+プロジェクトルートに `.browser-tools.json` ファイルを配置することで、デフォルト設定を保存できます。
+
+```json
+{
+  "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "channel": "stable",
+  "headless": false,
+  "profile": false
+}
+```
+
+これらの設定はコマンドラインオプションで上書き可能です。
+
 ## How to Invoke These Tools
 
 **CRITICAL FOR AGENTS**: Use the `browser-tools` command with subcommands. When invoking via the Bash tool:
@@ -57,10 +72,10 @@ Launch Chrome with remote debugging on `:9222`. Use `--profile` to preserve user
 ## Navigate
 
 ```bash
-bt nav https://google.com
-bt nav https://google.com --new
-bt navigate https://google.com
-bt navigate https://google.com --new
+browser-tools nav https://google.com
+browser-tools nav https://google.com --new
+browser-tools navigate https://google.com
+browser-tools navigate https://google.com --new
 ```
 
 Navigate to URLs. Use `--new` flag to open in a new tab instead of reusing current tab. `navigate` is an alias for `nav`.
@@ -122,6 +137,15 @@ browser-tools content https://google.com
 ```
 
 Navigate to a URL and extract readable content as markdown. Uses Mozilla Readability for article extraction and Turndown for HTML-to-markdown conversion. Works on pages with JavaScript content (waits for page to load).
+
+## Hacker News Scraper
+
+```bash
+browser-tools hn-scraper [limit]
+```
+
+Scrapes stories from the Hacker News front page. Options:
+- `[limit]` - Maximum number of stories to fetch (default: 30)
 
 ## Search + Content Strategies
 

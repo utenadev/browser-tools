@@ -3,3 +3,4 @@ package-lock.json
 browser-tools.exe
 my/
 .browser-tools-pid.json
+.browser-tools-profile/

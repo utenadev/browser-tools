@@ -1,38 +1,33 @@
 Running integration tests for browser-tools CLI...
 
 --- Starting tests ---
-NOTE: Ensure Chrome is running via "bun run start" before executing these tests.
+Setting up: Starting Chrome...
+Setup complete: Chrome is ready.
 ✓ Test 1: Invalid command fails PASSED
-✗ Test 2: `content` requires url FAILED: Expected to find "Not enough non-option arguments"
-   COMMAND: bun dist/index.js content
-   OUTPUT: ✗ Chrome is not running. Please start it first with "browser-tools start" or use the "run" command for atomic operations.
-...
 ✓ Test 3: `eval` requires code PASSED
 ✓ Test 4: `navigate` requires url PASSED
-✗ Test 5: `navigate` command works FAILED: Expected to find "✓ Navigated to: https://example.com"
-   COMMAND: bun dist/index.js navigate https://example.com
-   OUTPUT: ✗ Chrome is not running. Please start it first with "browser-tools start" or use the "run" command for atomic operations.
+✗ Test 5: `navigate` command works FAILED: Expected to find "✓ Navigated to: https://www.yahoo.co.jp"
+   COMMAND: bun dist/index.js navigate https://www.yahoo.co.jp
+   OUTPUT: ✗ Navigating to https://www.yahoo.co.jp: Navigating frame was detached
 ...
-✗ Test 6: `eval` command works FAILED: Expected to find "Example Domain"
+✗ Test 6: `eval` command works FAILED: Expected to find "Yahoo! JAPAN"
    COMMAND: bun dist/index.js eval document.title
-   OUTPUT: ✗ Chrome is not running. Please start it first with "browser-tools start" or use the "run" command for atomic operations.
+   OUTPUT: ✗ Evaluating code: Could not connect to browser: Failed to fetch browser webSocket URL from http://127.0.0.1:9222/json/version: Unable to connect. Is the computer able to access the url?
+  Run: browser-tools start
 ...
-✗ Test 7: `content` command with URL works FAILED: Expected to find "Example Domain"
-   COMMAND: bun dist/index.js content https://example.com
-   OUTPUT: ✗ Chrome is not running. Please start it first with "browser-tools start" or use the "run" command for atomic operations.
+✗ Test 7: `content` command with URL works FAILED: Expected to find "Yahoo! JAPAN"
+   COMMAND: bun dist/index.js content https://www.yahoo.co.jp
+   OUTPUT: ✗ Extracting content from https://www.yahoo.co.jp: Could not connect to browser: Failed to fetch browser webSocket URL from http://127.0.0.1:9222/json/version: Unable to connect. Is the computer able to access the url?
+  Run: browser-tools start
 ...
-✗ Test 8: `run` command executes content extraction FAILED: Expected to find "Example Domain"
-   COMMAND: bun dist/index.js run "content https://example.com"
-   OUTPUT: ---
-🚀 Starting temporary browser for command...
-✗ in 'run' command: getChromePath is not defined
+✗ Test 8: `search` command works FAILED: Expected to find "Result 1"
+   COMMAND: bun dist/index.js search test
+   OUTPUT: ✗ Searching Google: Could not connect to browser: Failed to fetch browser webSocket URL from http://127.0.0.1:9222/json/version: Unable to connect. Is the computer able to access the url?
+  Run: browser-tools start
 ...
-✗ Test 9: `run` command executes screenshot FAILED: Expected to find "✓ Screenshot saved to: C:\workspace\browser-tools\legacy-test-screenshot.png"
-   COMMAND: bun dist/index.js run "screenshot C:\workspace\browser-tools\legacy-test-screenshot.png --url https://example.com"
-   OUTPUT: ---
-🚀 Starting temporary browser for command...
-✗ in 'run' command: getChromePath is not defined
-...
-✗ Test 9 FAILED: Screenshot file was not created at C:\workspace\browser-tools\legacy-test-screenshot.png
+✓ Test 9: `cookies` command works PASSED
+✓ Test 10: `hn-scraper` command works PASSED
+Teardown: Stopping Chrome...
+Teardown complete.
 
 --- All tests completed ---

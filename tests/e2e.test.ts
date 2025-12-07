@@ -27,6 +27,24 @@ const execCommand = (command: string, args: string[] = []): Promise<{ stdout: st
   });
 };
 
+const waitForBrowser = async (port: number = 9222, timeout: number = 10000) => {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    try {
+      // Using fetch if available (Node 18+) or a simple connection check
+      // Since we are likely in a Node environment for Playwright, let's use http.get if fetch is uncertain, 
+      // but given the project uses 'bun' commands, the environment running this test is likely modern Node.
+      // We will try fetch.
+      const res = await fetch(`http://127.0.0.1:${port}/json/version`);
+      if (res.ok) return;
+    } catch (e) {
+      // Ignore connection errors
+    }
+    await setTimeout(200);
+  }
+  throw new Error(`Browser did not start within ${timeout}ms`);
+};
+
 test.describe('Browser Tools E2E Tests', () => {
   test('should start Chrome and navigate to a page', async ({ page }) => {
     // Start Chrome using browser-tools
@@ -37,7 +55,7 @@ test.describe('Browser Tools E2E Tests', () => {
     startProcess.unref();
 
     // Wait for Chrome to start
-    await setTimeout(5000);
+    await waitForBrowser();
 
     // Navigate to a page
     await execCommand('bun', ['dist/index.js', 'navigate', 'https://www.yahoo.co.jp']);
@@ -57,7 +75,7 @@ test.describe('Browser Tools E2E Tests', () => {
       stdio: 'ignore'
     });
     startProcess.unref();
-    await setTimeout(5000);
+    await waitForBrowser();
 
     // Extract content
     const result = await execCommand('bun', ['dist/index.js', 'content', 'https://www.yahoo.co.jp']);

@@ -7,7 +7,24 @@
  * Usage: node browser-hn-scraper.js [--limit <number>]
  */
 
+import { Yargs } from 'yargs';
 import * as cheerio from 'cheerio';
+import { handleError } from './utils/error-handler.js';
+
+export const command = 'hn-scraper [limit]';
+export const description = 'Scrape Hacker News stories';
+
+interface HnScraperArgs {
+  limit?: number;
+}
+
+export const builder = (yargs: Yargs) => {
+  return yargs.positional('limit', {
+    type: 'number',
+    description: 'Maximum number of submissions to return',
+    default: 30
+  });
+};
 
 /**
  * Scrapes Hacker News front page
@@ -83,14 +100,14 @@ async function scrapeHackerNews(limit = 30) {
   }
 }
 
-import { handleError } from './utils/error-handler.js';
+export const handler = async (argv: HnScraperArgs): Promise<void> => {
+  try {
+    const submissions = await scrapeHackerNews(argv.limit);
+    console.log(JSON.stringify(submissions, null, 2));
+    console.error(`\n✓ Scraped ${submissions.length} submissions`);
+  } catch (error) {
+    handleError(error, 'Scraping Hacker News');
+  }
+};
 
-export async function hnScraper(limit: number = 30): Promise<void> {
-	try {
-		const submissions = await scrapeHackerNews(limit);
-		console.log(JSON.stringify(submissions, null, 2));
-		console.error(`\n✓ Scraped ${submissions.length} submissions`);
-	} catch (error) {
-		handleError(error, 'Scraping Hacker News');
-	}
-}
+export const hnScraper = async (limit: number = 30) => handler({ limit });
