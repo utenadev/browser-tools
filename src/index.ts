@@ -2,7 +2,7 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { start, checkConnection } from './browser-start.js';
+import { start, checkConnection, close } from './browser-start.js';
 import { content } from './browser-content.js';
 import { cookies } from './browser-cookies.js';
 import { evalCode } from './browser-eval.js';
@@ -149,6 +149,12 @@ const argv = yargs(hideBin(process.argv))
       .example('$0 hn-scraper 50', 'Scrape 50 stories');
   }, async (argv) => {
     await hnScraper(argv.limit);
+  })
+  .command('close', 'Close the Chrome instance started by this tool', (yargs) => {
+    return yargs
+      .example('$0 close', 'Close the started Chrome instance');
+  }, async () => {
+    await close();
   })
   .middleware(async (argv) => {
     // Check connection for commands other than start and help

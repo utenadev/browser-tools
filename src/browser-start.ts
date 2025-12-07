@@ -4,6 +4,7 @@ import { install, ChromeReleaseChannel } from "@puppeteer/browsers";
 import { $ } from "bun";
 import { handleError } from './utils/error-handler.js';
 import { connectToBrowser } from './utils/browser-utils.js';
+import { savePid, loadPid, clearPid } from './config.js';
 
 export async function checkConnection(): Promise<boolean> {
 	try {
@@ -75,11 +76,13 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 	const userDataDir = `${process.env["HOME"] || process.env["USERPROFILE"]}/.cache/scraping`;
 	const args = ["--remote-debugging-port=9222", `--user-data-dir=${userDataDir}`];
 	if (headless) args.push('--headless');
-	spawn(
+	const child = spawn(
 		chromePathToUse,
 		args,
 		{ detached: true, stdio: "ignore" },
-	).unref();
+	);
+	child.unref();
+	savePid(child.pid!);
 
 	// Wait for Chrome to be ready by attempting to connect
 	let connected = false;
@@ -102,5 +105,26 @@ export async function start(useProfile: boolean, chromePath?: string, channel: s
 	console.log(`✓ Chrome started on :9222${useProfile ? " with your profile" : ""}`);
 	} catch (error) {
 		handleError(error, 'Starting Chrome');
+	}
+}
+
+export async function close(): Promise<void> {
+	try {
+		const pid = loadPid();
+		if (!pid) {
+			console.warn('No Chrome instance started by this tool.');
+			return;
+		}
+
+		if (process.platform === 'win32') {
+			await $`taskkill /pid ${pid} /t`.nothrow();
+		} else {
+			await $`kill ${pid}`.nothrow();
+		}
+
+		clearPid();
+		console.log('✓ Chrome instance closed.');
+	} catch (error) {
+		handleError(error, 'Closing Chrome');
 	}
 }
