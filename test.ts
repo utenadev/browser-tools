@@ -5,6 +5,9 @@ import { spawn } from 'child_process';
 import { writeFileSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 
+// Set test environment to skip middleware
+process.env.NODE_ENV = 'test';
+
 const logFile = 'test.log';
 let logContent = '';
 
@@ -61,22 +64,22 @@ async function runAllTests() {
   await runCliTest('Test 4: `navigate` requires url', ['navigate'], 'Not enough non-option arguments');
   
   // --- Functional tests (persistent session) ---
-  await runCliTest('Test 5: `navigate` command works', ['navigate', 'https://example.com'], '✓ Navigated to: https://example.com');
-  await runCliTest('Test 6: `eval` command works', ['eval', 'document.title'], 'Example Domain');
-  await runCliTest('Test 7: `content` command with URL works', ['content', 'https://example.com'], 'Example Domain', 15000);
+  await runCliTest('Test 5: `navigate` command works', ['navigate', 'https://www.yahoo.co.jp'], '✓ Navigated to: https://www.yahoo.co.jp');
+  await runCliTest('Test 6: `eval` command works', ['eval', 'document.title'], 'Yahoo! JAPAN');
+  await runCliTest('Test 7: `content` command with URL works', ['content', 'https://www.yahoo.co.jp'], 'Yahoo! JAPAN', 15000);
   
   // --- "run" command tests (atomic session) ---
   await runCliTest(
     'Test 8: `run` command executes content extraction',
-    ['run', '"content --url https://example.com"'],
-    'Example Domain'
+    ['run', '"content https://www.yahoo.co.jp"'],
+    'Yahoo! JAPAN'
   );
 
   const screenshotPath = join(process.cwd(), 'legacy-test-screenshot.png');
   if (existsSync(screenshotPath)) unlinkSync(screenshotPath);
   await runCliTest(
     'Test 9: `run` command executes screenshot',
-    ['run', `"screenshot ${screenshotPath} --url https://example.com"`],
+    ['run', `"screenshot ${screenshotPath} --url https://www.yahoo.co.jp"`],
     `✓ Screenshot saved to: ${screenshotPath}`
   );
   if (!existsSync(screenshotPath)) {

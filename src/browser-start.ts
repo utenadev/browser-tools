@@ -1,7 +1,7 @@
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import { Browser, launch, connect } from 'puppeteer-core';
-import { getChromePath } from './utils/browser-utils.js';
+
 import { savePid, loadPid, clearPid } from './config.js';
 import { handleError } from './utils/error-handler.js';
 import { Yargs } from 'yargs';

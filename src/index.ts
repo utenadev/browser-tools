@@ -83,7 +83,7 @@ yargsInstance.middleware(async (argv) => {
   const command = argv._[0];
   const needsConnectionCheck = command && !['start', 'run', 'close', 'help'].includes(command.toString());
   
-  if (needsConnectionCheck) {
+  if (process.env.NODE_ENV !== 'test' && needsConnectionCheck) {
     const isConnected = await checkConnection();
     if (!isConnected) {
       console.error('✗ Chrome is not running. Please start it first with "browser-tools start" or use the "run" command for atomic operations.');

@@ -4,6 +4,7 @@ import { hideBin } from 'yargs/helpers';
 import { start, close, startBuilder } from './browser-start.js';
 import { commands } from './commands.js';
 import { handleError } from './utils/error-handler.js';
+import { getChromePath } from './utils/browser-utils.js';
 
 interface RunArgs {
   command: string;

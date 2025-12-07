@@ -40,14 +40,14 @@ test.describe('Browser Tools E2E Tests', () => {
     await setTimeout(5000);
 
     // Navigate to a page
-    await execCommand('bun', ['dist/index.js', 'nav', 'https://example.com']);
+    await execCommand('bun', ['dist/index.js', 'navigate', 'https://www.yahoo.co.jp']);
 
     // Evaluate JavaScript
     const result = await execCommand('bun', ['dist/index.js', 'eval', 'document.title']);
-    expect(result.stdout.trim()).toBe('Example Domain');
+    expect(result.stdout.trim()).toBe('Yahoo! JAPAN');
 
-    // Clean up: kill Chrome
-    await execCommand('taskkill', ['/f', '/im', 'chrome.exe']);
+    // Clean up: close Chrome
+    await execCommand('bun', ['dist/index.js', 'close']);
   });
 
   test('should extract content from a page', async ({ page }) => {
@@ -60,10 +60,16 @@ test.describe('Browser Tools E2E Tests', () => {
     await setTimeout(5000);
 
     // Extract content
-    const result = await execCommand('bun', ['dist/index.js', 'content', 'https://example.com']);
-    expect(result.stdout).toContain('Example Domain');
+    const result = await execCommand('bun', ['dist/index.js', 'content', 'https://www.yahoo.co.jp']);
+    expect(result.stdout).toContain('Yahoo! JAPAN');
 
     // Clean up
-    await execCommand('taskkill', ['/f', '/im', 'chrome.exe']);
+    await execCommand('bun', ['dist/index.js', 'close']);
+  });
+
+  test('should run a command atomically with run', async ({ page }) => {
+    // Run navigate command atomically
+    const result = await execCommand('bun', ['dist/index.js', 'run', 'navigate https://www.yahoo.co.jp']);
+    expect(result.stdout).toContain('Navigated to: https://www.yahoo.co.jp');
   });
 });
