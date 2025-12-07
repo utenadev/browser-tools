@@ -1,16 +1,15 @@
 Running unit tests for bt CLI...
-✗ Test 1: browser-tools without args failed: Expected 'Browser Tools - Chrome DevTools Protocol tools for agent-assisted web automation' in output: 
-✓ Test 2: invalid command passed
-✓ Test 3: content without url passed
-✓ Test 4: eval without code passed
-✓ Test 5: nav without url passed
-✓ Test 6: pick without message passed
-✓ Test 7: search without query passed
-✗ Test 8: start Chrome failed: Timeout after 10000ms
-✓ Test 9: navigate to yahoo.co.jp passed
-✓ Test 10: evaluate document.title passed
-✓ Test 11: extract content from yahoo.co.jp passed
-✓ Test 12: search for puppeteer passed
-✓ Test 8: start Chrome passed
-✗ Test 13: kill Chrome (dummy start to trigger kill) failed: Timeout after 5000ms
+✓ Test 1: invalid command passed
+✓ Test 2: content without url passed
+✓ Test 3: eval without code passed
+✓ Test 4: nav without url passed
+✓ Test 5: pick without message passed
+✓ Test 6: search without query passed
+✗ Test 7: start Chrome failed: Timeout after 10000ms
+✓ Test 8: navigate to yahoo.co.jp passed
+✓ Test 9: evaluate document.title passed
+✓ Test 10: extract content from yahoo.co.jp passed
+✓ Test 11: search for puppeteer passed
+✓ Test 7: start Chrome passed
+✗ Test 12: kill Chrome (dummy start to trigger kill) failed: Timeout after 5000ms
 All tests completed.
