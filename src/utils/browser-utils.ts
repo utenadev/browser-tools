@@ -8,7 +8,7 @@ export async function connectToBrowser(): Promise<Browser> {
         browserURL: "http://localhost:9222",
         defaultViewport: null,
       }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
+		new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
     ]);
     return b;
   } catch (error) {

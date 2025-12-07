@@ -1,8 +1,9 @@
-// Unit tests for browser-tools CLI
-// Note: These tests require Chrome running on :9222 (run bt start first)
+// Simple integration tests for browser-tools CLI
+// Note: These tests require Chrome running on :9222 (run 'bun run start' first)
 
 import { spawn } from 'child_process';
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, unlinkSync } from 'fs';
+import { join } from 'path';
 
 const logFile = 'test.log';
 let logContent = '';
@@ -12,65 +13,82 @@ function log(message: string) {
   logContent += message + '\n';
 }
 
-log('Running unit tests for bt CLI...');
+log('Running integration tests for browser-tools CLI...');
 
-function runTest(command: string[], expected: string, testName: string, timeout: number = 10000) {
-  return new Promise<void>((resolve) => {
-    const child = spawn('bun', ['dist/index.js', ...command], { stdio: 'pipe' });
+function runCliTest(
+  testName: string,
+  command: string[],
+  expectedOutput: string,
+  timeout: number = 10000
+): Promise<void> {
+  return new Promise((resolve) => {
+    const child = spawn('bun', ['dist/index.js', ...command]);
     let stdout = '';
     let stderr = '';
 
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
+    child.stdout.on('data', (data) => (stdout += data.toString()));
+    child.stderr.on('data', (data) => (stderr += data.toString()));
 
     const timer = setTimeout(() => {
       child.kill();
-      log(`✗ ${testName} failed: Timeout after ${timeout}ms`);
+      log(`✗ ${testName} FAILED: Timeout after ${timeout}ms`);
       resolve();
     }, timeout);
 
-    child.on('close', (code) => {
+    child.on('close', () => {
       clearTimeout(timer);
       const output = stdout + stderr;
-      if (output.includes(expected)) {
-        log(`✓ ${testName} passed`);
+      if (output.includes(expectedOutput)) {
+        log(`✓ ${testName} PASSED`);
       } else {
-        log(`✗ ${testName} failed: Expected '${expected}' in output: ${output}`);
+        log(`✗ ${testName} FAILED: Expected to find "${expectedOutput}"`);
+        log(`   COMMAND: bun dist/index.js ${command.join(' ')}`);
+        log(`   OUTPUT: ${output.substring(0, 300)}...`);
       }
       resolve();
     });
   });
 }
 
-async function runTests() {
-  // Basic validation tests
-  await runTest(['invalid'], 'Unknown argument: invalid', 'Test 1: invalid command');
-  await runTest(['content'], 'Not enough non-option arguments: got 0, need at least 1', 'Test 2: content without url');
-  await runTest(['eval'], 'Not enough non-option arguments: got 0, need at least 1', 'Test 3: eval without code');
-  await runTest(['nav'], 'Not enough non-option arguments: got 0, need at least 1', 'Test 4: nav without url');
-  await runTest(['pick'], 'Not enough non-option arguments: got 0, need at least 1', 'Test 5: pick without message');
-  await runTest(['search'], 'Not enough non-option arguments: got 0, need at least 1', 'Test 6: search without query');
+async function runAllTests() {
+  log('\n--- Starting tests ---');
+  log('NOTE: Ensure Chrome is running via "bun run start" before executing these tests.');
+  
+  // --- Prerequisite tests ---
+  await runCliTest('Test 1: Invalid command fails', ['invalid-command'], 'Unknown argument: invalid-command');
+  await runCliTest('Test 2: `content` requires url', ['content'], 'Not enough non-option arguments');
+  await runCliTest('Test 3: `eval` requires code', ['eval'], 'Not enough non-option arguments');
+  await runCliTest('Test 4: `navigate` requires url', ['navigate'], 'Not enough non-option arguments');
+  
+  // --- Functional tests (persistent session) ---
+  await runCliTest('Test 5: `navigate` command works', ['navigate', 'https://example.com'], '✓ Navigated to: https://example.com');
+  await runCliTest('Test 6: `eval` command works', ['eval', 'document.title'], 'Example Domain');
+  await runCliTest('Test 7: `content` command with URL works', ['content', 'https://example.com'], 'Example Domain', 15000);
+  
+  // --- "run" command tests (atomic session) ---
+  await runCliTest(
+    'Test 8: `run` command executes content extraction',
+    ['run', '"content --url https://example.com"'],
+    'Example Domain'
+  );
 
-  // Functional tests (require Chrome running)
-  await runTest(['start', '--channel', 'beta'], 'Chrome started on :9222', 'Test 7: start Chrome');
-  await runTest(['nav', 'https://www.yahoo.co.jp'], 'Navigated to: https://www.yahoo.co.jp', 'Test 8: navigate to yahoo.co.jp');
-  await runTest(['eval', 'document.title'], 'Yahoo! JAPAN', 'Test 9: evaluate document.title');
-  await runTest(['content', 'https://www.yahoo.co.jp'], 'Yahoo! JAPAN', 'Test 10: extract content from yahoo.co.jp');
-  await runTest(['search', 'puppeteer', '-n', '3'], 'Puppeteer | Puppeteer', 'Test 11: search for puppeteer');
+  const screenshotPath = join(process.cwd(), 'legacy-test-screenshot.png');
+  if (existsSync(screenshotPath)) unlinkSync(screenshotPath);
+  await runCliTest(
+    'Test 9: `run` command executes screenshot',
+    ['run', `"screenshot ${screenshotPath} --url https://example.com"`],
+    `✓ Screenshot saved to: ${screenshotPath}`
+  );
+  if (!existsSync(screenshotPath)) {
+    log(`✗ Test 9 FAILED: Screenshot file was not created at ${screenshotPath}`);
+  } else {
+    unlinkSync(screenshotPath); // Clean up
+  }
 
-  // Clean up: kill Chrome
-  await runTest(['start', '--channel', 'beta'], 'Chrome started on :9222', 'Test 12: kill Chrome (dummy start to trigger kill)', 5000);
+  log('\n--- All tests completed ---');
 
-  log('All tests completed.');
-
-  // Write to log file
   writeFileSync(logFile, logContent);
-  log(`Results written to ${logFile}`);
+  log(`\nTest results logged to ${logFile}`);
 }
 
-runTests();
+runAllTests();

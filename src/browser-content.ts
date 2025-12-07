@@ -1,38 +1,88 @@
-import { htmlToMarkdown, extractContent } from "./utils/content-extractor.js";
+import { Browser } from 'puppeteer-core';
+import { Yargs } from 'yargs';
+import { htmlToMarkdown, extractContent } from './utils/content-extractor.js';
 import { handleError } from './utils/error-handler.js';
 import { connectToBrowser, getActivePage } from './utils/browser-utils.js';
 
-export async function content(url: string): Promise<void> {
-	try {
-	// Global timeout - exit if script takes too long
-	const TIMEOUT = 30000;
-	const timeoutId = setTimeout(() => {
-		console.error("✗ Timeout after 30s");
-		process.exit(1);
-	}, TIMEOUT).unref();
+type Format = 'markdown' | 'text' | 'html';
 
-	const b = await connectToBrowser();
-	const p = await getActivePage(b);
-
-	await Promise.race([
-		p.goto(url, { waitUntil: "networkidle2" }),
-		new Promise((r) => setTimeout(r, 10000)),
-	]).catch(() => {});
-
-	// Get HTML via page evaluation
-	const outerHTML = await p.evaluate(() => document.documentElement.outerHTML);
-
-	const finalUrl = p.url();
-
-	const { title, content } = extractContent(outerHTML, finalUrl);
-
-	console.log(`URL: ${finalUrl}`);
-	if (title) console.log(`Title: ${title}`);
-	console.log("");
-	console.log(content);
-
-	process.exit(0);
-	} catch (error) {
-		handleError(error, 'Extracting content');
-	}
+interface ContentArgs {
+  url?: string;
+  format?: Format;
+  browserInstance?: Browser;
 }
+
+export const command = 'content [url]';
+export const description = 'Extract readable content from a web page';
+
+export const builder = (yargs: Yargs) => {
+  return yargs
+    .positional('url', {
+      type: 'string',
+      description: 'URL to extract content from. If omitted, uses the current page.',
+    })
+    .option('format', {
+      type: 'string',
+      description: 'Output format',
+      choices: ['markdown', 'text', 'html'],
+      default: 'markdown',
+    })
+    .example('$0 content', 'Extract content from the current page')
+    .example('$0 content https://example.com', 'Extract content from a URL');
+};
+
+export const handler = async (argv: ContentArgs): Promise<void> => {
+  const shouldDisconnect = !argv.browserInstance;
+  let browser: Browser | undefined = argv.browserInstance;
+  
+  try {
+    if (!browser) {
+      browser = await connectToBrowser();
+    }
+    if (!browser) {
+      throw new Error('Could not connect to browser.');
+    }
+
+    const page = await getActivePage(browser);
+    let targetUrl = page.url();
+
+    if (argv.url) {
+      await page.goto(argv.url, { waitUntil: 'domcontentloaded' });
+      targetUrl = argv.url;
+      console.log('✓ Navigated to:', argv.url);
+    }
+    
+    // Get HTML via page evaluation
+    const outerHTML = await page.evaluate(() => document.documentElement.outerHTML);
+    const finalUrl = page.url();
+
+    const { title, content: extractedHtml } = extractContent(outerHTML, finalUrl);
+
+    let output = '';
+    switch (argv.format) {
+      case 'html':
+        output = extractedHtml;
+        break;
+      case 'text':
+        // A simple conversion, could be improved
+        output = extractedHtml.replace(/<[^>]+>/g, '');
+        break;
+      case 'markdown':
+      default:
+        output = htmlToMarkdown(extractedHtml);
+        break;
+    }
+
+    console.log(`URL: ${finalUrl}`);
+    if (title) console.log(`Title: ${title}`);
+    console.log('\n---\n');
+    console.log(output);
+
+  } catch (error) {
+    handleError(error, `Extracting content from ${argv.url || 'current page'}`);
+  } finally {
+    if (shouldDisconnect && browser) {
+      await browser.disconnect();
+    }
+  }
+};

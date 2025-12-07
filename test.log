@@ -5,11 +5,10 @@ Running unit tests for bt CLI...
 ✓ Test 4: nav without url passed
 ✓ Test 5: pick without message passed
 ✓ Test 6: search without query passed
-✗ Test 7: start Chrome failed: Timeout after 10000ms
-✓ Test 8: navigate to yahoo.co.jp passed
-✓ Test 9: evaluate document.title passed
-✓ Test 10: extract content from yahoo.co.jp passed
-✓ Test 11: search for puppeteer passed
-✓ Test 7: start Chrome passed
-✗ Test 12: kill Chrome (dummy start to trigger kill) failed: Timeout after 5000ms
+✓ Test 7: navigate to yahoo.co.jp passed
+✓ Test 8: evaluate document.title passed
+✓ Test 9: extract content from yahoo.co.jp passed
+✓ Test 10: search for puppeteer passed
+✗ Test 11: close Chrome instance failed: Expected 'Chrome instance closed.' in output: ✗ Chrome is not running. Please start Chrome first with "browser-tools start".
+
 All tests completed.
