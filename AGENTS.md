@@ -11,3 +11,17 @@ UTはtest.ts にある
 ブラウザでのテスト E2E Testは tests/e2e.test.ts を使うこと
 基本、手動は必要いはず
 
+## 作業履歴
+See works.md for daily work logs.
+
+### 2025-12-06
+- Implemented comprehensive improvements based on code review:
+  - Phase 1: Added content-extractor utility for code deduplication, integrated yargs for CLI parsing with help system.
+  - Phase 2: Added Playwright for E2E testing with basic test cases.
+  - Phase 3: Standardized error handling across modules, improved Google search selectors.
+  - Phase 4: Added configuration file support, enhanced Japanese documentation.
+  - Phase 5: Further error handling standardization.
+- Added navigate command as alias for nav.
+- Enhanced help system with --help for all commands and connection checks.
+- Built standalone .exe for Windows.
+- Configured to use Chrome Beta channel by default.
