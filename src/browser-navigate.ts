@@ -7,7 +7,6 @@ interface NavigateArgs {
   url: string;
   new?: boolean;
   browserInstance?: Browser;
-  pageInstance?: any;
 }
 
 export const command = 'navigate <url>';
@@ -45,7 +44,7 @@ export const handler = async (argv: NavigateArgs): Promise<void> => {
       await page.goto(argv.url, { waitUntil: 'domcontentloaded' });
       console.log('✓ Opened:', argv.url);
     } else {
-      const page = argv.pageInstance || await getActivePage(browser);
+      const page = await getActivePage(browser);
       await page.goto(argv.url, { waitUntil: 'domcontentloaded' });
       console.log('✓ Navigated to:', argv.url);
     }

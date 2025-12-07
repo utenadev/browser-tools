@@ -13,9 +13,3 @@ UTはtest.ts にある
 
 ## 作業履歴
 See works.md for daily work logs.
-
-### 2025-12-07
-- Fixed run subcommand implementation: centralized commands in index.ts, improved error handling.
-- Updated end-work-session command: /quit to /exit, fixed frontmatter.
-- Built browser-tools.exe.
-- Verified UT and E2E tests pass.

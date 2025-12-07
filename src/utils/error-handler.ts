@@ -14,8 +14,6 @@ export function handleError(error: unknown, context: string): never {
     hint = error.hint;
   } else if (error instanceof Error) {
     message = error.message;
-  } else if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
-    message = (error as any).message;
   } else {
     message = 'Unknown error';
   }

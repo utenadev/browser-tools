@@ -1,11 +1,10 @@
 import { Browser } from 'puppeteer-core';
 import yargs, { Yargs } from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { close } from './browser-start.js';
-import { getChromePath } from './utils/browser-utils.js';
-import puppeteer from 'puppeteer-core';
-
+import { start, close, startBuilder } from './browser-start.js';
+import { commands } from './commands.js';
 import { handleError } from './utils/error-handler.js';
+import { getChromePath } from './utils/browser-utils.js';
 
 interface RunArgs {
   command: string;
@@ -19,96 +18,64 @@ export const command = 'run <command>';
 export const description = 'Run a single command in a temporary browser instance';
 
 export const builder = (yargs: Yargs) => {
-  return yargs
+  // Apply the start options (like --headless, --profile) to the run command
+  const yargsWithStartOptions = startBuilder(yargs);
+  
+  return yargsWithStartOptions
     .positional('command', {
       type: 'string',
       description: 'The browser-tools command to execute, enclosed in quotes.',
     })
-    .option('channel', {
-      type: 'string',
-      description: 'Chrome channel to use',
-      default: 'stable',
-    })
-    .option('headless', {
-      type: 'boolean',
-      description: 'Run in headless mode',
-    })
-    .option('chrome-path', {
-      type: 'string',
-      description: 'Specify Chrome executable path',
-    })
     .example(
-      '$0 run "content https://example.com"',
-      'Launch a browser, extract content, and close.'
+      '$0 run "screenshot my-page.png --url https://example.com"', 
+      'Launch a browser, take a screenshot, and close.'
     )
     .example(
-      '$0 run --headless "screenshot page.png --url https://example.com"',
-      'Run in headless mode to take a screenshot.'
+      '$0 run --headless "content https://example.com/article"', 
+      'Run in headless mode to extract content.'
     );
 };
 
-export const handler = async (argv: RunArgs, commandsMap: any = {}): Promise<void> => {
+export const handler = async (argv: RunArgs): Promise<void> => {
   let browser: Browser | undefined;
   try {
     // 1. Start a new browser instance
     console.log('---');
     console.log('🚀 Starting temporary browser for command...');
-    const chromePath = argv.chromePath || getChromePath(argv.channel);
-    browser = await puppeteer.launch({
-      executablePath: chromePath,
-      headless: argv.headless ?? true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox'
-      ]
+    browser = await start({
+      profile: argv.profile,
+      headless: argv.headless,
+      chromePath: argv.chromePath,
+      channel: argv.channel,
     });
 
-    console.log('Browser launched');
-
     // 2. Parse and execute the subcommand
-    const commandString = argv.command.trim();
-    const parts = commandString.split(/\s+/);
-    const subCommandName = parts[0];
-
-    if (!subCommandName || !commandsMap[subCommandName]) {
-      throw new Error(`Unknown command provided to 'run': ${subCommandName}`);
+    const commandString = argv.command;
+    
+    // Use a new yargs instance to parse the inner command
+    const subYargs = yargs(hideBin(process.argv));
+    
+    // Register all available commands on this temporary yargs instance
+    // so it knows how to parse the command string.
+    for (const key in commands) {
+      const cmd = commands[key as keyof typeof commands];
+      subYargs.command(cmd.command, cmd.description, cmd.builder, () => {});
     }
 
+    // Parse the command string
+    const parsedArgv = await subYargs.parse(commandString);
+    const subCommandName = parsedArgv._[0]?.toString();
+
+    if (!subCommandName || !commands[subCommandName]) {
+      throw new Error(`Unknown command provided to 'run': ${subCommandName}`);
+    }
+    
     console.log(`🏃 Executing: ${subCommandName}...`);
     console.log('---');
 
-    // 3. Create a new page for the command
-    const page = await browser.newPage();
-
-    // 4. Find and run the actual command handler
-    const commandToRun = commandsMap[subCommandName];
-
-    // Create argv for the subcommand
-    const subArgv: any = {
-      _: parts.slice(1), // remaining parts as positional args
-      browserInstance: browser,
-      pageInstance: page,
-      // Add other defaults if needed
-    };
-
-    // Set specific args based on command
-    switch (subCommandName) {
-      case 'content':
-        subArgv.url = parts[1];
-        break;
-      case 'navigate':
-        subArgv.url = parts[1];
-        break;
-      case 'screenshot':
-        subArgv.path = parts[1];
-        const urlIndex = parts.indexOf('--url');
-        if (urlIndex !== -1) {
-          subArgv.url = parts[urlIndex + 1];
-        }
-        break;
-    }
-
-    await commandToRun.handler(subArgv);
+    // 3. Find and run the actual command handler
+    const commandToRun = commands[subCommandName as keyof typeof commands];
+    await commandToRun.handler({ ...parsedArgv, browserInstance: browser });
     
     console.log('---');
     console.log(`✅ Command finished: ${subCommandName}`);
@@ -119,7 +86,7 @@ export const handler = async (argv: RunArgs, commandsMap: any = {}): Promise<voi
     // 4. Ensure the browser is closed
     if (browser) {
       console.log('🛑 Closing temporary browser...');
-      await browser.close();
+      await close(browser);
       console.log('---');
     }
   }
