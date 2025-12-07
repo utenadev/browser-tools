@@ -10,6 +10,7 @@ interface ScreenshotArgs {
   url?: string;
   fullPage?: boolean;
   browserInstance?: Browser;
+  pageInstance?: any;
 }
 
 export const command = 'screenshot [path]';
@@ -47,7 +48,7 @@ export const handler = async (argv: ScreenshotArgs): Promise<void> => {
       throw new Error('Could not connect to browser.');
     }
 
-    const page = await getActivePage(browser);
+    const page = argv.pageInstance || await getActivePage(browser);
 
     if (argv.url) {
       await page.goto(argv.url, { waitUntil: 'domcontentloaded' });

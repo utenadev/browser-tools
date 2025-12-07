@@ -24,3 +24,9 @@
 - Enhanced help system with --help for all commands and connection checks.
 - Built standalone .exe for Windows.
 - Configured to use Chrome Beta channel by default.
+
+### 2025-12-07 (continued)
+- Fixed run subcommand implementation issues: resolved command mapping and WebSocket errors by centralizing commands in index.ts and improving error handling for non-Error objects.
+- Updated custom command end-work-session: changed /quit to /exit, fixed frontmatter, and created global command file.
+- Built latest browser-tools.exe standalone executable.
+- Ran and verified UT and E2E tests pass successfully.

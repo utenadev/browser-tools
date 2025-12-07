@@ -4,16 +4,42 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { start, close, checkConnection, startBuilder } from './browser-start.js';
 import * as run from './run.js';
-import { commands } from './commands.js';
+
 import { loadConfig } from './config.js';
 
 // TODO: Refactor these commands to the new structure
+import * as navigate from './browser-navigate.js';
+import * as screenshot from './browser-screenshot.js';
+import * as content from './browser-content.js';
 import { cookies } from './browser-cookies.js';
 import { evalCode } from './browser-eval.js';
 import { hnScraper } from './browser-hn-scraper.js';
 import { pick } from './browser-pick.js';
 import { search } from './browser-search.js';
 
+// Centralized command definitions
+const commands = {
+  [navigate.command.split(' ')[0]]: {
+    command: navigate.command,
+    description: navigate.description,
+    builder: navigate.builder,
+    handler: navigate.handler,
+  },
+  [screenshot.command.split(' ')[0]]: {
+    command: screenshot.command,
+    description: screenshot.description,
+    builder: screenshot.builder,
+    handler: screenshot.handler,
+  },
+  [content.command.split(' ')[0]]: {
+    command: content.command,
+    description: content.description,
+    builder: content.builder,
+    handler: content.handler,
+  },
+  // Other commands like 'eval', 'search', etc. will be added here
+  // once they are refactored to the new structure.
+};
 
 // Main yargs setup
 const yargsInstance = yargs(hideBin(process.argv))
@@ -40,12 +66,12 @@ yargsInstance.command(
 );
 
 // --- Single-run command ---
-yargsInstance.command(run.command, run.description, run.builder, run.handler);
+yargsInstance.command(run.command, run.description, run.builder, (argv) => run.handler(argv, commands));
 
 // --- Refactored commands ---
 // Register all commands from the centralized map
 for (const key in commands) {
-  const cmd = commands[key as keyof typeof commands];
+  const cmd = commands[key];
   yargsInstance.command(cmd.command, cmd.description, cmd.builder, cmd.handler);
 }
 

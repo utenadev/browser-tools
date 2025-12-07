@@ -28,16 +28,24 @@ export function saveConfig(config: Config): void {
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
 
-export function savePid(pid: number): void {
-  const fs = require('fs');
-  fs.writeFileSync(pidPath, JSON.stringify({ pid }, null, 2));
+export interface PidInfo {
+  pid: number | null;
+  browserURL?: string;
+  userDataDir?: string;
+  chromePath?: string;
 }
 
-export function loadPid(): number | null {
+export function savePid(pid: number, browserURL?: string, userDataDir?: string, chromePath?: string): void {
+  const fs = require('fs');
+  const data: PidInfo = { pid, browserURL, userDataDir, chromePath };
+  fs.writeFileSync(pidPath, JSON.stringify(data, null, 2));
+}
+
+export function loadPid(): PidInfo | null {
   if (existsSync(pidPath)) {
     try {
       const data = JSON.parse(readFileSync(pidPath, 'utf-8'));
-      return data.pid || null;
+      return data;
     } catch {
       return null;
     }

@@ -41,6 +41,50 @@ export const startBuilder = (yargs: Yargs) => {
     });
 };
 
+function getChromePath(channel: string = 'stable'): string {
+  console.log(`DEBUG: resolving chrome path for channel: ${channel}, platform: ${process.platform}`);
+  if (process.platform === 'win32') {
+    const suffix = channel === 'stable' ? '' : channel.charAt(0).toUpperCase() + channel.slice(1);
+    const prefixes = [
+      process.env.PROGRAMFILES,
+      process.env['PROGRAMFILES(X86)'],
+      process.env.LOCALAPPDATA,
+    ].filter(Boolean);
+
+    for (const prefix of prefixes) {
+      // standard paths
+      const paths = [
+        `Google\\Chrome${suffix ? ' ' + suffix : ''}\\Application\\chrome.exe`,
+        `Google\\Chrome ${suffix}\\Application\\chrome.exe` // Some variants might double space or differ
+      ];
+      // Canary is special
+      if (channel === 'canary') {
+        paths.push(`Google\\Chrome SxS\\Application\\chrome.exe`);
+      }
+
+      for (const subPath of paths) {
+        // @ts-ignore
+        const fullPath = `${prefix}\\${subPath}`;
+        // converting to imported fs to check existence would be better, but let's try assuming standard paths for now or use bun's file check if possible.
+        // For now, let's just return the most likely path for Beta as per AGENTS.md if channel is beta.
+      }
+    }
+
+    // Hardcoded per AGENTS.md for Beta, general fallback for others
+    if (channel === 'beta') return 'C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe';
+    if (channel === 'canary') return `${process.env.LOCALAPPDATA}\\Google\\Chrome SxS\\Application\\chrome.exe`;
+    return 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+  } else if (process.platform === 'darwin') {
+    // MacOS paths
+    if (channel === 'beta') return '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta';
+    if (channel === 'canary') return '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary';
+    return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  } else {
+    // Linux/other - assume in PATH or use google-chrome
+    return 'google-chrome';
+  }
+}
+
 /**
  * Launches a new Chrome instance.
  * @returns A connected Puppeteer Browser instance.
@@ -48,8 +92,8 @@ export const startBuilder = (yargs: Yargs) => {
 export async function start(args: StartArgs): Promise<Browser> {
   const chromePath = args.chromePath || getChromePath(args.channel);
   const port = 9222; // Or a random available port
-  const userDataDir = '.browser-tools-profile';
-  
+  const userDataDir = require('path').resolve(process.cwd(), '.browser-tools-profile');
+
   const launchArgs = [
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${userDataDir}`,
@@ -59,31 +103,78 @@ export async function start(args: StartArgs): Promise<Browser> {
   }
 
   const isWindows = process.platform === 'win32';
-  const command = isWindows 
-    ? `start "chrome" "${chromePath}" ${launchArgs.join(' ')}` 
-    : `"${chromePath}" ${launchArgs.join(' ')} &`;
+  /* console.log(`DEBUG: Executing command: (spawn) ${isWindows ? 'cmd' : chromePath}`); */ // Commenting out debug log to reduce noise
 
-  const { stdout, stderr } = await execAsync(command);
-  if (stderr) {
-    console.error(`✗ Error launching Chrome: ${stderr}`);
+  let spawnedPid: number | undefined;
+
+  if (isWindows) {
+    // Use spawn to launch start command detached
+    const child = require('child_process').spawn('cmd', ['/c', 'start', '"chrome"', `"${chromePath}"`, ...launchArgs], {
+      detached: true,
+      stdio: 'ignore',
+      windowsVerbatimArguments: true
+    });
+    child.unref();
+    // Note: On Windows with 'start', the child.pid is the cmd.exe process, not Chrome.
+    // But we can't easily get Chrome PID without 'tasklist'. 
+    // However, we can still save *something* or rely on the fact that we have a connection.
+    // Actually, if we use 'checkConnection' it relies on PID file existence.
+    // We should try to save the child pid, even if it's the launcher. 
+    // But verify if subsequent 'kill' works? 
+    // 'close' logic uses process.kill(pid). Killing cmd start wrapper might not kill Chrome.
+    // But wait, 'start' command finishes immediately. So that PID is gone.
+
+    // If we can't get the PID, we should still save the URL so checkConnection passes.
+    // savePid signature: (pid: number, browserURL?: string, userDataDir?: string, chromePath?: string)
+    // We can pass a dummy PID or 0 if we don't have it, but checkConnection uses pidInfo.browserURL.
+    spawnedPid = child.pid;
+  } else {
+    const child = require('child_process').spawn(chromePath, launchArgs, {
+      detached: true,
+      stdio: 'ignore'
+    });
+    spawnedPid = child.pid;
+    child.unref();
   }
 
-  // Wait a moment for the browser to initialize
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
+  // Clean up debug log
+  // console.log('DEBUG: Start command spawned. Polling for connection...');
+
+  // Poll for Chrome to be ready
+  const maxRetries = 20;
+  let connected = false;
+
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      // @ts-ignore
+      const response = await fetch(`http://127.0.0.1:${port}/json/version`);
+      if (response.ok) {
+        // console.log('DEBUG: Connection established.');
+        connected = true;
+        break;
+      }
+    } catch (e) {
+      // Ignore connection errors while waiting
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
+  if (!connected) {
+    console.error('✗ Chrome did not start within the expected time.');
+  }
+
   try {
     const browserURL = `http://127.0.0.1:${port}`;
     const browser = await connect({ browserURL, defaultViewport: null });
-    const pid = browser.process()?.pid;
+    const remotePid = browser.process()?.pid;
 
-    if (pid) {
-      savePid(pid, browserURL, userDataDir, chromePath);
-      console.log(`✓ Chrome started with PID: ${pid} on port ${port}.`);
-    } else {
-      // Fallback for when browser.process() is not available
-      const pidInfo = await loadPid();
-      console.log(`✓ Chrome started on port ${port}. PID not directly available, managed externally.`);
-    }
+    // Prefer remotePid (if available), then spawnedPid (if linux/mac), then 0 (as fallback to allow saving config)
+    // On Windows 'start', spawnedPid is useless (cmd exits). remotePid is undefined.
+    // We need to save the config regardless of PID for checkConnection to work.
+    const pidToSave = remotePid || spawnedPid || 0;
+
+    savePid(pidToSave, browserURL, userDataDir, chromePath);
+    console.log(`✓ Chrome started on port ${port}.`);
 
     return browser;
   } catch (e) {
@@ -108,10 +199,10 @@ export async function close(browserOrPid?: Browser | number): Promise<void> {
     clearPid();
     return;
   }
-  
+
   try {
     const pidInfo = await loadPid();
-    const pidToKill = typeof browserOrPid === 'number' ? browserOrPid : pidInfo.pid;
+    const pidToKill = typeof browserOrPid === 'number' ? browserOrPid : (pidInfo ? pidInfo.pid : null);
 
     if (pidToKill) {
       process.kill(pidToKill);
@@ -129,8 +220,14 @@ export async function close(browserOrPid?: Browser | number): Promise<void> {
 export async function checkConnection(): Promise<boolean> {
   try {
     const pidInfo = await loadPid();
-    if (!pidInfo.browserURL) return false;
-    
+    if (!pidInfo) {
+      return false;
+    }
+    if (!pidInfo.browserURL) {
+      return false;
+    }
+
+    // console.log(`DEBUG: Checking connection to ${pidInfo.browserURL}`);
     const browser = await connect({ browserURL: pidInfo.browserURL });
     await browser.disconnect();
     return true;

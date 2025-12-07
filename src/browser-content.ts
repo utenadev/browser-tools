@@ -10,6 +10,7 @@ interface ContentArgs {
   url?: string;
   format?: Format;
   browserInstance?: Browser;
+  pageInstance?: any;
 }
 
 export const command = 'content [url]';
@@ -43,7 +44,7 @@ export const handler = async (argv: ContentArgs): Promise<void> => {
       throw new Error('Could not connect to browser.');
     }
 
-    const page = await getActivePage(browser);
+    const page = argv.pageInstance || await getActivePage(browser);
     let targetUrl = page.url();
 
     if (argv.url) {

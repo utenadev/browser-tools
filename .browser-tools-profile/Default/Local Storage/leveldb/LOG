@@ -1,0 +1,5 @@
+2025/12/07-12:25:27.933 5fa4 Creating DB C:\workspace\browser-tools\.browser-tools-profile\Default\Local Storage\leveldb since it was missing.
+2025/12/07-12:25:27.962 5fa4 Reusing MANIFEST C:\workspace\browser-tools\.browser-tools-profile\Default\Local Storage\leveldb/MANIFEST-000001
+2025/12/07-12:33:54.904 58f0 Level-0 table #5: started
+2025/12/07-12:33:54.973 58f0 Level-0 table #5: 33162 bytes OK
+2025/12/07-12:33:54.977 58f0 Delete type=0 #3
