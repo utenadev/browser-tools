@@ -30,7 +30,7 @@ const execCommand = (command: string, args: string[] = []): Promise<{ stdout: st
 test.describe('Browser Tools E2E Tests', () => {
   test('should start Chrome and navigate to a page', async ({ page }) => {
     // Start Chrome using browser-tools
-    const startProcess = spawn('bun', ['dist/index.js', 'start', '--chrome-path', 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'], {
+    const startProcess = spawn('bun', ['dist/index.js', 'start', '--channel', 'beta'], {
       detached: true,
       stdio: 'ignore'
     });
@@ -52,7 +52,7 @@ test.describe('Browser Tools E2E Tests', () => {
 
   test('should extract content from a page', async ({ page }) => {
     // Start Chrome
-    const startProcess = spawn('bun', ['dist/index.js', 'start', '--chrome-path', 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'], {
+    const startProcess = spawn('bun', ['dist/index.js', 'start', '--channel', 'beta'], {
       detached: true,
       stdio: 'ignore'
     });

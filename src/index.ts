@@ -151,8 +151,9 @@ const argv = yargs(hideBin(process.argv))
     await hnScraper(argv.limit);
   })
   .middleware(async (argv) => {
-    // Check connection for commands other than start
-    if (argv._[0] !== 'start') {
+    // Check connection for commands other than start and help
+    const command = argv._[0];
+    if (command && command !== 'start' && !argv.help) {
       const isConnected = await checkConnection();
       if (!isConnected) {
         console.error('✗ Chrome is not running. Please start Chrome first with "browser-tools start".');

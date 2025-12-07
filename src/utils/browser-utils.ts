@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, Page } from 'puppeteer-core';
 import { BrowserToolsError } from './error-handler';
 
 export async function connectToBrowser(): Promise<Browser> {
@@ -12,7 +12,7 @@ export async function connectToBrowser(): Promise<Browser> {
     ]);
     return b;
   } catch (error) {
-    throw new BrowserToolsError(`Could not connect to browser: ${error instanceof Error ? error.message : 'Unknown error'}`, 'Run: bt start');
+    throw new BrowserToolsError(`Could not connect to browser: ${error instanceof Error ? error.message : 'Unknown error'}`, 'Run: browser-tools start');
   }
 }
 
